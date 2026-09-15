@@ -1,0 +1,58 @@
+---
+title: "Counting Siblings"
+format: html
+---
+
+Here are the results of the sibling counting exercise done as part of the [Summer Open And Reproducible Research (SOAR²) Camp](https://ucsb-library-research-data-services.github.io/SOAR2/).
+
+**Goal:** Determine the distribution of the number of siblings among the participants and among the participants' parents.
+
+**Methodology:** Participants randomly sampled and interviewed each other and recorded results on paper sheets, which were then transcribed into individual spreadsheets, and which were then concatenated.  The raw data therefore contains multiple values per participant.
+
+First, let's load the necessary libraries...
+
+```{r message=FALSE}
+library(tidyverse)
+library(googlesheets4)
+```
+
+Load the data dynamically from the Google spreadsheet and form a single value for each participant by averaging the recorded values.
+
+```{r message=FALSE}
+sheets_url <- "https://docs.google.com/spreadsheets/d/1KmVLUnrQ-hVlN5cfTnDcQ4mO_BiKfLhJ7wRp955_Oqw/edit?gid=1946106803"
+
+gs4_deauth()
+all_sheets <- sheet_names(sheets_url)
+sheets_to_read <- all_sheets[all_sheets != "Combined"]
+
+# Read each sheet into a named list of data frames
+sheets_data <- map(sheets_to_read, ~ read_sheet(sheets_url, sheet = .x)) %>%
+  set_names(sheets_to_read)
+
+data <- bind_rows(sheets_data, .id = "pollster") %>%
+  drop_na() %>%
+  group_by(participant_id) %>%
+  summarize(
+    avg_siblings = mean(num_siblings),
+    avg_parent_siblings = mean(tot_num_parent_siblings)/2
+  )
+```
+
+The data looks like this:
+
+```{r}
+data
+```
+
+Now plot a histogram showing the distribution of number of siblings.
+
+```{r}
+num_bins <- max(c(data$avg_siblings, data$avg_parent_siblings)) + 1
+
+ggplot(data, aes(x=avg_siblings)) +
+  geom_histogram(bins=num_bins) +
+  ggtitle("Sibling distribution") +
+  xlab("Number of siblings") +
+  ylab("Count")
+```
+
