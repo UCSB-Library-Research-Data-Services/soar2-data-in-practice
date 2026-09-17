@@ -17,9 +17,10 @@ library(googlesheets4)
 library(tidyverse)
 ```
 
-We'll get the data by dynamically reading the camp's Google spreadsheet.  This is highly unusual as a standard practice, so we will write the data to a local CSV file here and then read it back in below as would be more typical.
+We'll get the data by dynamically reading the camp's Google spreadsheet.  This is highly unusual as a standard practice.  To provide a more realistic example we'll write the data to a local CSV file and then read it back in below as would be more typical.
 
 ```{r message=FALSE}
+#| code-fold: true
 sheets_url <- "https://docs.google.com/spreadsheets/d/1KmVLUnrQ-hVlN5cfTnDcQ4mO_BiKfLhJ7wRp955_Oqw/edit"
 
 # Disable/avoid authentication (assumes the sheet is world-readable)
@@ -50,6 +51,7 @@ data
 Now plot a histogram showing the distribution of number of siblings.
 
 ```{r}
+#| code-fold: true
 max_value <- ceiling(max(c(data$avg_siblings, data$avg_parent_siblings)))
 
 data_long <- data %>%
@@ -75,6 +77,5 @@ ggplot(data_long, aes(x=value, fill=variable)) +
 Lastly, let's compare the means of the two distributions.
 
 ```{r}
-print(mean(data$avg_siblings))
-print(mean(data$avg_parent_siblings))
+
 ```
