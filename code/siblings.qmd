@@ -30,10 +30,9 @@ read_sheet(sheets_url, "Combined") %>%
   write_csv(here("data", "combined_data.csv"))
 ```
 
- Read the data and form a single value for each participant by averaging the recorded values.
+Now read the data from the CSV file and form a single value for each participant by averaging the recorded values.
 
 ```{r message=FALSE}
-
 data <- read_csv(here("data", "combined_data.csv")) %>%
   group_by(participant_id) %>%
   summarize(
@@ -51,12 +50,31 @@ data
 Now plot a histogram showing the distribution of number of siblings.
 
 ```{r}
-num_bins <- max(c(data$avg_siblings, data$avg_parent_siblings)) + 1
+max_value <- ceiling(max(c(data$avg_siblings, data$avg_parent_siblings)))
 
-ggplot(data, aes(x=avg_siblings)) +
-  geom_histogram(bins=num_bins) +
+data_long <- data %>%
+  pivot_longer(
+    cols = c(avg_siblings, avg_parent_siblings),
+    names_to = "variable",
+    values_to = "value"
+  )
+
+ggplot(data_long, aes(x=value, fill=variable)) +
+  geom_histogram(binwidth=1, position="dodge") +
   ggtitle("Sibling distribution") +
-  xlab("Number of siblings") +
-  ylab("Count")
+  labs(x="Number of siblings", y="Count", fill="Generation") +
+  scale_fill_discrete(
+    labels=c(
+      "avg_siblings" = "This generation",
+      "avg_parent_siblings" = "Previous generation"
+    )
+  ) +
+  scale_x_continuous(breaks=seq(0, max_value))
 ```
 
+Lastly, let's compare the means of the two distributions.
+
+```{r}
+print(mean(data$avg_siblings))
+print(mean(data$avg_parent_siblings))
+```
