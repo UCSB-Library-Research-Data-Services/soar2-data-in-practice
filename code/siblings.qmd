@@ -7,30 +7,34 @@ Here are the results of the sibling counting exercise done as part of the [Summe
 
 **Goal:** Determine the distribution of the number of siblings among the participants and among the participants' parents.
 
-**Methodology:** Participants randomly sampled and interviewed each other and recorded results on paper sheets, which were then transcribed into individual spreadsheets, and which were then concatenated.  The raw data therefore contains multiple values per participant.
+**Methodology:** Participants randomly sampled and interviewed each other and recorded results on paper sheets, which were then transcribed into individual tabs in a Google spreadsheet, and which were then concatenated.  The raw data therefore contains multiple values per interviewee.
 
 First, let's load the necessary libraries...
 
 ```{r message=FALSE}
-library(tidyverse)
+library(here)
 library(googlesheets4)
+library(tidyverse)
 ```
 
-Load the data dynamically from the Google spreadsheet and form a single value for each participant by averaging the recorded values.
+We'll get the data by dynamically reading the camp's Google spreadsheet.  This is highly unusual as a standard practice, so we will write the data to a local CSV file here and then read it back in below as would be more typical.
 
 ```{r message=FALSE}
-sheets_url <- "https://docs.google.com/spreadsheets/d/1KmVLUnrQ-hVlN5cfTnDcQ4mO_BiKfLhJ7wRp955_Oqw/edit?gid=1946106803"
+sheets_url <- "https://docs.google.com/spreadsheets/d/1KmVLUnrQ-hVlN5cfTnDcQ4mO_BiKfLhJ7wRp955_Oqw/edit"
 
+# Disable/avoid authentication (assumes the sheet is world-readable)
 gs4_deauth()
-all_sheets <- sheet_names(sheets_url)
-sheets_to_read <- all_sheets[all_sheets != "Combined"]
 
-# Read each sheet into a named list of data frames
-sheets_data <- map(sheets_to_read, ~ read_sheet(sheets_url, sheet = .x)) %>%
-  set_names(sheets_to_read)
+read_sheet(sheets_url, "Combined") %>%
+  select(participant_id, num_siblings, tot_num_parent_siblings) %>%
+  write_csv(here("data", "combined_data.csv"))
+```
 
-data <- bind_rows(sheets_data, .id = "pollster") %>%
-  drop_na() %>%
+ Read the data and form a single value for each participant by averaging the recorded values.
+
+```{r message=FALSE}
+
+data <- read_csv(here("data", "combined_data.csv")) %>%
   group_by(participant_id) %>%
   summarize(
     avg_siblings = mean(num_siblings),
