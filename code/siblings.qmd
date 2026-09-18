@@ -1,0 +1,81 @@
+---
+title: "Counting Siblings"
+format: html
+---
+
+Here are the results of the sibling counting exercise done as part of the [Summer Open And Reproducible Research (SOAR²) Camp](https://ucsb-library-research-data-services.github.io/SOAR2/).
+
+**Goal:** Determine the distribution of the number of siblings among the participants and among the participants' parents.
+
+**Methodology:** Participants randomly sampled and interviewed each other and recorded results on paper sheets, which were then transcribed into individual tabs in a Google spreadsheet, and which were then concatenated.  The raw data therefore contains multiple values per interviewee.
+
+First, let's load the necessary libraries...
+
+```{r message=FALSE}
+library(here)
+library(googlesheets4)
+library(tidyverse)
+```
+
+We'll get the data by dynamically reading the camp's Google spreadsheet.  This is highly unusual as a standard practice.  To provide a more realistic example we'll write the data to a local CSV file and then read it back in below as would be more typical.
+
+```{r message=FALSE}
+#| code-fold: true
+sheets_url <- "https://docs.google.com/spreadsheets/d/1KmVLUnrQ-hVlN5cfTnDcQ4mO_BiKfLhJ7wRp955_Oqw/edit"
+
+# Disable/avoid authentication (assumes the sheet is world-readable)
+gs4_deauth()
+
+read_sheet(sheets_url, "Combined") %>%
+  select(participant_id, num_siblings, tot_num_parent_siblings) %>%
+  write_csv(here("data", "combined_data.csv"))
+```
+
+Now read the data from the CSV file and form a single value for each participant by averaging the recorded values.
+
+```{r message=FALSE}
+data <- read_csv(here("data", "combined_data.csv")) %>%
+  group_by(participant_id) %>%
+  summarize(
+    avg_siblings = mean(num_siblings),
+    avg_parent_siblings = mean(tot_num_parent_siblings)/2
+  )
+```
+
+The data looks like this:
+
+```{r}
+data
+```
+
+Now plot a histogram showing the distribution of number of siblings.
+
+```{r}
+#| code-fold: true
+max_value <- ceiling(max(c(data$avg_siblings, data$avg_parent_siblings)))
+
+data_long <- data %>%
+  pivot_longer(
+    cols = c(avg_siblings, avg_parent_siblings),
+    names_to = "variable",
+    values_to = "value"
+  )
+
+ggplot(data_long, aes(x=value, fill=variable)) +
+  geom_histogram(binwidth=1, position="dodge") +
+  ggtitle("Sibling distribution") +
+  labs(x="Number of siblings", y="Count", fill="Generation") +
+  scale_fill_discrete(
+    labels=c(
+      "avg_siblings" = "This generation",
+      "avg_parent_siblings" = "Previous generation"
+    )
+  ) +
+  scale_x_continuous(breaks=seq(0, max_value))
+```
+
+Lastly, let's compare the means of the two distributions.
+
+```{r}
+
+```
