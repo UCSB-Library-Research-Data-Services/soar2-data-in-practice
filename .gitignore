@@ -20,3 +20,7 @@
 
 # Shiny server / rsconnect deployments
 rsconnect/
+
+data/combined_data.csv
+code/siblings.html
+code/siblings_files/*
